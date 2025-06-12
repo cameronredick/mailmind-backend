@@ -19,7 +19,11 @@ const createUser = (email) => {
 
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: "chrome-extension://hokannacimkcchppkaelkcjpeeamgjjp",
+  credentials: true
+}));
+
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
