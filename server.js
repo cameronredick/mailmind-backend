@@ -130,15 +130,26 @@ app.get("/api/auth/google", passport.authenticate("google", {
 }));
 
 
-app.get("/api/auth/google/callback", 
-  passport.authenticate("google", { failureRedirect: "/" }),
-  (req, res) => {
-    // Redirect back to extension or frontend (use your actual extension ID)
-    res.redirect("https://mailmind.ai/login-success"); // or just:
-res.send("✅ Login successful! You can now return to the extension.");
+app.get("/api/auth/google/callback", (req, res, next) => {
+  passport.authenticate("google", { failureRedirect: "/" }, (err, user, info) => {
+    if (err || !user) {
+      console.error("Authentication failed:", err || "No user returned");
+      return res.redirect("/");
+    }
 
-  }
-);
+    req.logIn(user, (loginErr) => {
+      if (loginErr) {
+        console.error("Login error:", loginErr);
+        return res.redirect("/");
+      }
+
+      // Successful login — respond or redirect
+      return res.send("✅ Login successful! You can now return to the extension.");
+      // Or: res.redirect("chrome-extension://<YOUR_EXTENSION_ID>/popup.html");
+    });
+  })(req, res, next);
+});
+
 
 app.get("/api/user/me", (req, res) => {
   if (!req.user) return res.status(401).json({ error: "Not logged in" });
