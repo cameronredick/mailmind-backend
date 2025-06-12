@@ -1,2 +1,0 @@
-# mailmind-backend
-# mailmind-backend
