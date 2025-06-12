@@ -134,7 +134,9 @@ app.get("/api/auth/google/callback",
   passport.authenticate("google", { failureRedirect: "/" }),
   (req, res) => {
     // Redirect back to extension or frontend (use your actual extension ID)
-    res.redirect("chrome-extension://<YOUR_EXTENSION_ID>/popup.html");
+    res.redirect("https://mailmind.ai/login-success"); // or just:
+res.send("✅ Login successful! You can now return to the extension.");
+
   }
 );
 
