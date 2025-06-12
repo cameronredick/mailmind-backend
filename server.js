@@ -123,7 +123,12 @@ app.post('/api/log', async (req, res) => {
   }
 });
 
-app.get("/api/auth/google", passport.authenticate("google", { scope: ["email", "profile"] }));
+app.get("/api/auth/google", passport.authenticate("google", {
+  scope: ["email", "profile"],
+  accessType: "offline",
+  prompt: "consent"
+}));
+
 
 app.get("/api/auth/google/callback", 
   passport.authenticate("google", { failureRedirect: "/" }),
