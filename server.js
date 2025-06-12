@@ -36,12 +36,20 @@ app.use(passport.session());
 passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-  callbackURL: "https://mailmind-backend.onrender.com/api/auth/google/callback"
+  callbackURL: "/api/auth/google/callback"
 }, async (accessToken, refreshToken, profile, done) => {
-  const email = profile.emails[0].value;
-  let user = getUserByEmail(email);
-  if (!user) user = createUser(email);
-  return done(null, user);
+  try {
+    const email = profile.emails?.[0]?.value;
+    if (!email) throw new Error("No email returned from Google");
+
+    let user = getUserByEmail(email);
+    if (!user) user = createUser(email);
+
+    return done(null, user);
+  } catch (err) {
+    console.error("❌ Google login error:", err);
+    return done(err);
+  }
 }));
 
 passport.serializeUser((user, done) => {
