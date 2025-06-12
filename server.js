@@ -32,7 +32,10 @@ app.use(session({
   secret: process.env.SESSION_SECRET || 'secret-key',
   resave: false,
   saveUninitialized: false,
-  cookie: { secure: false } // Set true if behind HTTPS proxy
+  cookie: {
+  secure: true,
+  sameSite: "none"
+}
 }));
 
 app.use(passport.initialize());
