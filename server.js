@@ -39,12 +39,20 @@ passport.use(new GoogleStrategy({
   callbackURL: "https://mailmind-backend.onrender.com/api/auth/google/callback"
 }, async (accessToken, refreshToken, profile, done) => {
   try {
+    console.log("🔍 Google profile received:", JSON.stringify(profile, null, 2));
+
     const email = profile.emails?.[0]?.value;
     if (!email) throw new Error("No email returned from Google");
 
-    let user = getUserByEmail(email);
-    if (!user) user = createUser(email);
+    console.log("✅ Email extracted:", email);
 
+    let user = getUserByEmail(email);
+    if (!user) {
+      console.log("🆕 Creating new user...");
+      user = createUser(email);
+    }
+
+    console.log("✅ Authenticated user:", user);
     return done(null, user);
   } catch (err) {
     console.error("❌ Google login error:", err);
