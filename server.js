@@ -137,25 +137,28 @@ app.get("/api/auth/google", passport.authenticate("google", {
 }));
 
 
+const jwt = require("jsonwebtoken");
+
 app.get("/api/auth/google/callback", (req, res, next) => {
-  passport.authenticate("google", { failureRedirect: "/" }, (err, user, info) => {
-    if (err || !user) {
-      console.error("Authentication failed:", err || "No user returned");
-      return res.redirect("/");
-    }
+  passport.authenticate("google", { session: false }, (err, user) => {
+    if (err || !user) return res.redirect("/");
 
-    req.logIn(user, (loginErr) => {
-      if (loginErr) {
-        console.error("Login error:", loginErr);
-        return res.redirect("/");
-      }
+    // Create a JWT with the user info
+    const token = jwt.sign(
+      {
+        id: user.id,
+        email: user.email,
+        plan: user.plan
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "2h" }
+    );
 
-      // Successful login — respond or redirect
-      return res.send("✅ Login successful! You can now return to the extension.");
-      // Or: res.redirect("chrome-extension://<YOUR_EXTENSION_ID>/popup.html");
-    });
+    // Redirect back to the extension with the token in the URL
+    res.redirect(`chrome-extension://hokannacimkcchppkaelkcjpeeamgjjp/popup.html?token=${token}`);
   })(req, res, next);
 });
+
 
 
 app.get("/api/user/me", (req, res) => {
