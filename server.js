@@ -8,6 +8,9 @@ const session = require('express-session');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 
+const PUBLIC_DIR = path.join(__dirname, "public");
+app.use(express.static(PUBLIC_DIR));
+
 const jwt = require("jsonwebtoken");
 
 const users = {};
@@ -151,7 +154,7 @@ app.get("/api/auth/google/callback", (req, res, next) => {
     );
 
     // Redirect back to the extension with the token in the URL
-    res.redirect(`chrome-extension://hokannacimkcchppkaelkcjpeeamgjjp/popup.html?token=${token}`);
+    res.redirect(`https://mailmind-backend.onrender.com/redirect.html?token=${token}`);
   })(req, res, next);
 });
 

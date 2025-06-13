@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Redirecting to Extension...</title>
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get("token");
+    if (token) {
+      // Redirect to the extension
+      window.location.href = `chrome-extension://hokannacimkcchppkaelkcjpeeamgjjp/popup.html?token=${token}`;
+    } else {
+      document.body.innerText = "Missing token.";
+    }
+  </script>
+</head>
+<body>
+  Redirecting...
+</body>
+</html>
