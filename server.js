@@ -8,11 +8,7 @@ const session = require('express-session');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 
-const PUBLIC_DIR = path.join(__dirname, "public");
-app.use(express.static(PUBLIC_DIR));
-
 const jwt = require("jsonwebtoken");
-
 const users = {};
 const getUserById = id => users[id];
 const getUserByEmail = email => Object.values(users).find(u => u.email === email);
@@ -21,9 +17,11 @@ const createUser = (email) => {
   users[id] = { id, email, plan: 'Free', createdAt: new Date() };
   return users[id];
 };
-
-
 const app = express();
+// ✅ Serve static files from /public after app is defined
+const PUBLIC_DIR = path.join(__dirname, "public");
+app.use(express.static(PUBLIC_DIR));
+
 app.use(cors({
   origin: "chrome-extension://hokannacimkcchppkaelkcjpeeamgjjp",
   credentials: true
