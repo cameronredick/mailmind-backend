@@ -8,6 +8,8 @@ const session = require('express-session');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 
+const jwt = require("jsonwebtoken");
+
 const users = {};
 const getUserById = id => users[id];
 const getUserByEmail = email => Object.values(users).find(u => u.email === email);
@@ -31,12 +33,9 @@ app.use(express.json());
 app.use(session({
   secret: process.env.SESSION_SECRET || 'secret-key',
   resave: false,
-  saveUninitialized: false,
-  cookie: {
-  secure: true,
-  sameSite: "none"
-}
+  saveUninitialized: false
 }));
+
 
 app.use(passport.initialize());
 app.use(passport.session());
@@ -136,9 +135,6 @@ app.get("/api/auth/google", passport.authenticate("google", {
   prompt: "consent"
 }));
 
-
-const jwt = require("jsonwebtoken");
-
 app.get("/api/auth/google/callback", (req, res, next) => {
   passport.authenticate("google", { session: false }, (err, user) => {
     if (err || !user) return res.redirect("/");
@@ -162,9 +158,20 @@ app.get("/api/auth/google/callback", (req, res, next) => {
 
 
 app.get("/api/user/me", (req, res) => {
-  if (!req.user) return res.status(401).json({ error: "Not logged in" });
-  res.json(req.user);
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  const token = authHeader.split(" ")[1];
+  try {
+    const user = jwt.verify(token, process.env.JWT_SECRET);
+    return res.json(user);
+  } catch (err) {
+    return res.status(401).json({ error: "Invalid token" });
+  }
 });
+
 
 // === Start Server ===
 const PORT = process.env.PORT || 3001;
