@@ -41,6 +41,7 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
+const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY); // Add near top with other imports
 
