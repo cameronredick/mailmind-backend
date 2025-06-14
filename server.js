@@ -42,6 +42,39 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY); // Add near top with other imports
+
+app.post("/create-checkout-session", async (req, res) => {
+  const { email, plan } = req.body;
+
+  const priceMap = {
+    starter: "price_1RZjpSI3Juc0DFOS1WglYGkr",
+    pro: "price_1RZjplI3Juc0DFOS2Kdrn2fB"
+  };
+
+  const priceId = priceMap[plan];
+
+  if (!email || !priceId) {
+    return res.status(400).json({ error: "Missing email or invalid plan." });
+  }
+
+  try {
+    const session = await stripe.checkout.sessions.create({
+      customer_email: email,
+      line_items: [{ price: priceId, quantity: 1 }],
+      mode: "subscription",
+      success_url: "https://chrome.google.com/webstore/detail/your-extension-id",
+      cancel_url: "https://mailmind.ai/cancel", // You can update this later
+    });
+
+    res.json({ url: session.url });
+  } catch (err) {
+    console.error("Stripe Checkout error:", err);
+    res.status(500).json({ error: "Failed to create Stripe session." });
+  }
+});
+
+
 passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
