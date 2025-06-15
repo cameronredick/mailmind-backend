@@ -7,7 +7,7 @@ require('dotenv').config();
 const session = require('express-session');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
-
+const bodyParser = require('body-parser');
 const jwt = require("jsonwebtoken");
 const users = {};
 const getUserById = id => users[id];
@@ -27,6 +27,54 @@ app.use(cors({
   credentials: true
 }));
 
+const plan = session.metadata?.plan || "Free";
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY); // Add near top with other imports
+
+// ✅ Stripe webhook route MUST use raw body parser
+app.post("/webhook", bodyParser.raw({ type: "application/json" }), (req, res) => {
+  console.log("📥 Webhook received");
+
+  const sig = req.headers["stripe-signature"];
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+  let event;
+  try {
+    event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+    console.log("✅ Webhook verified:", event.type);
+  } catch (err) {
+    console.error("❌ Webhook signature verification failed:", err.message);
+    return res.sendStatus(400);
+  }
+
+  // ✅ Handle checkout completion
+  if (event.type === "checkout.session.completed") {
+    const session = event.data.object;
+    const email = session.customer_email;
+
+    const priceId = session.subscription ? session.display_items?.[0]?.price?.id : null;
+    const plan = priceId === "price_1RZjpSI3Juc0DFOS1WglYGkr" ? "Starter" :
+                 priceId === "price_1RZjplI3Juc0DFOS2Kdrn2fB" ? "Pro" : "Free";
+
+    console.log(`✅ Plan updated via webhook: ${email} → ${plan}`);
+    updateUserPlan(email, plan);
+  }
+
+  res.sendStatus(200);
+});
+
+const userPlans = {};
+
+function updateUserPlan(email, plan) {
+  if (email) {
+    userPlans[email] = plan;
+  }
+}
+
+app.get("/api/user/plan", (req, res) => {
+  const email = req.query.email;
+  res.json({ plan: userPlans[email] || "Free" });
+});
+
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
@@ -42,8 +90,6 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-
-const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY); // Add near top with other imports
 
 app.post("/create-checkout-session", async (req, res) => {
   const { email, plan } = req.body;
@@ -64,6 +110,7 @@ app.post("/create-checkout-session", async (req, res) => {
       customer_email: email,
       line_items: [{ price: priceId, quantity: 1 }],
       mode: "subscription",
+      metadata: { plan },
       success_url: "https://chrome.google.com/webstore/detail/your-extension-id",
       cancel_url: "https://mailmind.ai/cancel", // You can update this later
     });
