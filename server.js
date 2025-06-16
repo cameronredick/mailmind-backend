@@ -27,7 +27,6 @@ app.use(cors({
   credentials: true
 }));
 
-const plan = session.metadata?.plan || "Free";
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY); // Add near top with other imports
 
 // ✅ Stripe webhook route MUST use raw body parser
@@ -49,14 +48,15 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), (req, res) =>
   // ✅ Handle checkout completion
   if (event.type === "checkout.session.completed") {
     const session = event.data.object;
-    const email = session.customer_email;
 
-    const priceId = session.subscription ? session.display_items?.[0]?.price?.id : null;
-    const plan = priceId === "price_1RZjpSI3Juc0DFOS1WglYGkr" ? "Starter" :
-                 priceId === "price_1RZjplI3Juc0DFOS2Kdrn2fB" ? "Pro" : "Free";
+const email = session.customer_email;
+let plan = session.metadata?.plan || "Free";
+if (plan.toLowerCase() === "starter") plan = "Starter";
+else if (plan.toLowerCase() === "pro") plan = "Pro";
+else plan = "Free";
 
-    console.log(`✅ Plan updated via webhook: ${email} → ${plan}`);
-    updateUserPlan(email, plan);
+console.log(`✅ Plan updated via webhook: ${email} → ${plan}`);
+updateUserPlan(email, plan);
   }
 
   res.sendStatus(200);
