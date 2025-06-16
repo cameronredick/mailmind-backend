@@ -250,7 +250,7 @@ app.get("/api/auth/google/callback", (req, res, next) => {
     );
 
     // Redirect back to the extension with the token in the URL
-    res.redirect(`https://mailmind-backend.onrender.com/redirect.html?token=${token}`);
+    res.redirect(`chrome-extension://hokannacimkcchppkaelkcjpeeamgjjp/callback.html?token=${token}`);
   })(req, res, next);
 });
 
