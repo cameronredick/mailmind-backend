@@ -1,14 +1,13 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Redirecting...</title>
+  <title>Redirecting to Extension...</title>
   <script>
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get("token");
-
     if (token) {
-      // Redirect to a callback page inside the extension that will handle localStorage and auto-close
-      window.location.href = `chrome-extension://hokannacimkcchppkaelkcjpeeamgjjp/callback.html?token=${token}`;
+      // Redirect to the extension
+      window.location.href = `chrome-extension://hokannacimkcchppkaelkcjpeeamgjjp/popup.html?token=${token}`;
     } else {
       document.body.innerText = "Missing token.";
     }
