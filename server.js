@@ -46,27 +46,33 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), (req, res) =>
   }
 
   // ✅ Handle checkout completion
-  if (event.type === "checkout.session.completed") {
-    const session = event.data.object;
+let email = null;
+let plan = "Free";
+let user = null;
 
-const email = session.customer_email;
-let plan = session.metadata?.plan || "Free";
-if (plan.toLowerCase() === "starter") plan = "Starter";
-else if (plan.toLowerCase() === "pro") plan = "Pro";
-else plan = "Free";
+if (event.type === "checkout.session.completed") {
+  const session = event.data.object;
 
-console.log(`✅ Plan updated via webhook: ${email} → ${plan}`);
-updateUserPlan(email, plan);
-  
+  email = session.customer_email;
+  plan = session.metadata?.plan || "Free";
+  if (plan.toLowerCase() === "starter") plan = "Starter";
+  else if (plan.toLowerCase() === "pro") plan = "Pro";
+  else plan = "Free";
 
-const user = getUserByEmail(email);
-if (user) {
-  user.plan = plan;
-  console.log("🧠 Updated user memory object:", user);
-}}
-if (!user) {
+  console.log(`✅ Plan updated via webhook: ${email} → ${plan}`);
+  updateUserPlan(email, plan);
+
+  user = getUserByEmail(email);
+  if (user) {
+    user.plan = plan;
+    console.log("🧠 Updated user memory object:", user);
+  }
+}
+
+if (!user && email) {
   console.warn(`⚠️ User not found in memory when applying plan update: ${email}`);
 }
+
 
   res.sendStatus(200);
 });
