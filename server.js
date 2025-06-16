@@ -12,6 +12,7 @@ const jwt = require("jsonwebtoken");
 const users = {};
 const getUserById = id => users[id];
 const getUserByEmail = email => Object.values(users).find(u => u.email === email);
+const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 const createUser = (email) => {
   const id = Date.now().toString();
   users[id] = { id, email, plan: 'Free', createdAt: new Date() };
@@ -34,7 +35,6 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), (req, res) =>
   console.log("📥 Webhook received");
 
   const sig = req.headers["stripe-signature"];
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
   let event;
   try {
@@ -57,7 +57,16 @@ else plan = "Free";
 
 console.log(`✅ Plan updated via webhook: ${email} → ${plan}`);
 updateUserPlan(email, plan);
-  }
+  
+
+const user = getUserByEmail(email);
+if (user) {
+  user.plan = plan;
+  console.log("🧠 Updated user memory object:", user);
+}}
+if (!user) {
+  console.warn(`⚠️ User not found in memory when applying plan update: ${email}`);
+}
 
   res.sendStatus(200);
 });
@@ -72,7 +81,11 @@ function updateUserPlan(email, plan) {
 
 app.get("/api/user/plan", (req, res) => {
   const email = req.query.email;
-  res.json({ plan: userPlans[email] || "Free" });
+  if (!email) return res.status(400).json({ error: "Missing email" });
+
+  const user = getUserByEmail(email);
+  const plan = user?.plan || userPlans[email] || "Free";
+  res.json({ plan });
 });
 
 app.use(express.urlencoded({ extended: true }));
@@ -88,8 +101,6 @@ app.use(session({
 
 app.use(passport.initialize());
 app.use(passport.session());
-
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
 app.post("/create-checkout-session", async (req, res) => {
   const { email, plan } = req.body;
@@ -260,3 +271,4 @@ const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`✅ MailMind proxy & logger running on http://localhost:${PORT}`);
 });
+
