@@ -238,7 +238,6 @@ app.get("/api/auth/google/callback", (req, res, next) => {
   passport.authenticate("google", { session: false }, (err, user) => {
     if (err || !user) return res.redirect("/");
 
-    // Create a JWT with the user info
     const token = jwt.sign(
       {
         id: user.id,
@@ -249,10 +248,11 @@ app.get("/api/auth/google/callback", (req, res, next) => {
       { expiresIn: "2h" }
     );
 
-    // Redirect back to the extension with the token in the URL
-    res.redirect(`chrome-extension://hokannacimkcchppkaelkcjpeeamgjjp/callback.html?token=${token}`);
+    // ✅ REVERT BACK TO redirect.html
+    res.redirect(`https://mailmind-backend.onrender.com/redirect.html?token=${token}`);
   })(req, res, next);
 });
+
 
 
 
